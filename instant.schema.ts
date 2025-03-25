@@ -19,12 +19,47 @@ const _schema = i.schema({
 			email: i.string(),
 			verified: i.boolean(),
 			createdAt: i.any()
+		}),
+		// Call entities
+		calls: i.entity({
+			title: i.string(),
+			startTime: i.string(),
+			endTime: i.string(),
+			status: i.string(),
+			createdAt: i.string(),
+			updatedAt: i.string()
+		}),
+		callRoles: i.entity({
+			quantity: i.number(),
+			notes: i.string(),
+			isGlobalRole: i.boolean()
+		}),
+		globalRoles: i.entity({
+			name: i.string(),
+			type: i.string()
 		})
 	},
 	links: {
 		userProfile: {
 			forward: { on: 'companyProfiles', has: 'one', label: '$user' },
 			reverse: { on: '$users', has: 'one', label: 'profile' }
+		},
+		// Call links
+		callCreator: {
+			forward: { on: 'calls', has: 'one', label: 'creator' },
+			reverse: { on: '$users', has: 'many', label: 'createdCalls' }
+		},
+		callCompany: {
+			forward: { on: 'calls', has: 'one', label: 'company' },
+			reverse: { on: 'companyProfiles', has: 'many', label: 'calls' }
+		},
+		callRoleAssignment: {
+			forward: { on: 'callRoles', has: 'one', label: 'call' },
+			reverse: { on: 'calls', has: 'many', label: 'roles' }
+		},
+		callRoleGlobalRole: {
+			forward: { on: 'callRoles', has: 'one', label: 'globalRole' },
+			reverse: { on: 'globalRoles', has: 'many', label: 'callRoles' }
 		}
 	},
 	rooms: {}

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { companyAuth } from '$lib/companyAuth';
     import { db, addTechnician } from '$lib/db';
+    import { tx } from 'svelte-instantdb';
 
     // Get page data from props
     const { data, form } = $props();
@@ -16,8 +17,13 @@
     let quickLastName = $state('');
     let quickPhone = $state('');
     let formStatus = $state({ submitting: false, message: '', type: '' });
-    let selectedTechnician = $state(null);
+    let selectedTechnician = $state<any>(null);
     let isDrawerOpen = $state(false);
+    let drawerFormStatus = $state({ submitting: false, message: '', type: '' });
+    
+    // Form values for the drawer
+    let techEmail = $state('');
+    let techVerified = $state(false);
 
     // Derived state
     const technicians = $derived(query.current.data?.technicians || []);
@@ -124,9 +130,13 @@
         }
     }
 
-    function openTechnicianDrawer(technician) {
+    function openTechnicianDrawer(technician: any) {
         selectedTechnician = technician;
+        techEmail = technician.email || '';
+        techVerified = technician.verified || false;
         isDrawerOpen = true;
+        drawerFormStatus.message = '';
+        drawerFormStatus.type = '';
     }
 
     function closeDrawer() {
@@ -134,6 +144,46 @@
         setTimeout(() => {
             selectedTechnician = null;
         }, 300); // Wait for drawer animation before clearing data
+    }
+    
+    // Save technician details
+    async function saveTechnicianDetails() {
+        if (!selectedTechnician) return;
+        
+        drawerFormStatus.submitting = true;
+        drawerFormStatus.message = '';
+        drawerFormStatus.type = '';
+        
+        try {
+            // Create transaction to update the technician
+            await db.transact(
+                tx.technicians[selectedTechnician.id].update({
+                    email: techEmail || null,
+                    verified: techVerified
+                })
+            );
+            
+            // Update the selected technician object to reflect changes
+            selectedTechnician.email = techEmail;
+            selectedTechnician.verified = techVerified;
+            
+            // Success handling
+            drawerFormStatus.message = 'Technician updated successfully!';
+            drawerFormStatus.type = 'success';
+            
+            // Set a timeout to clear the message
+            setTimeout(() => {
+                drawerFormStatus.message = '';
+                drawerFormStatus.type = '';
+            }, 3000);
+        } catch (error) {
+            // Error handling
+            console.error('Failed to update technician:', error);
+            drawerFormStatus.message = error instanceof Error ? error.message : 'Failed to update technician';
+            drawerFormStatus.type = 'error';
+        } finally {
+            drawerFormStatus.submitting = false;
+        }
     }
 </script>
 
@@ -274,11 +324,11 @@
         </div>
     </main>
 
-    <!-- Side drawer for technician details -->
+    <!-- Side drawer for technician details - with semi-transparent background -->
     <div class={`fixed inset-0 overflow-hidden z-50 ${isDrawerOpen ? 'block' : 'hidden'}`}>
         <div class="absolute inset-0 overflow-hidden">
-            <!-- Background overlay -->
-            <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick={closeDrawer}></div>
+            <!-- Semi-transparent background overlay -->
+            <div class="absolute inset-0 bg-gray-500 bg-opacity-30 transition-opacity" onclick={closeDrawer}></div>
             
             <section class="absolute inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
                 <div class={`transform transition ease-in-out duration-300 ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
@@ -298,6 +348,12 @@
                                         </svg>
                                     </button>
                                 </div>
+                                
+                                {#if drawerFormStatus.message}
+                                    <div class={`mt-4 p-4 rounded-md ${drawerFormStatus.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+                                        {drawerFormStatus.message}
+                                    </div>
+                                {/if}
                                 
                                 <div class="mt-6 flex-1">
                                     <div class="border-t border-gray-200 py-6">
@@ -344,8 +400,7 @@
                                                     <input 
                                                         type="checkbox" 
                                                         class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                                        checked={selectedTechnician.verified}
-                                                        readonly
+                                                        bind:checked={techVerified}
                                                     />
                                                     <span class="ml-2 text-sm text-gray-600">Verified for assignments</span>
                                                 </label>
@@ -357,7 +412,7 @@
                                                     type="email"
                                                     id="techEmail"
                                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                                    value={selectedTechnician.email || ''}
+                                                    bind:value={techEmail}
                                                     placeholder="Enter email address"
                                                 />
                                             </div>
@@ -366,9 +421,11 @@
                                                 <div class="flex justify-end">
                                                     <button
                                                         type="button"
-                                                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                                        disabled={drawerFormStatus.submitting}
+                                                        onclick={saveTechnicianDetails}
+                                                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                                                     >
-                                                        Save Changes
+                                                        {drawerFormStatus.submitting ? 'Saving...' : 'Save Changes'}
                                                     </button>
                                                 </div>
                                             </div>
