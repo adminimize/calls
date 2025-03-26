@@ -307,7 +307,7 @@
     <div class={`fixed inset-0 overflow-hidden z-50 ${isDrawerOpen ? 'block' : 'hidden'}`}>
         <div class="absolute inset-0 overflow-hidden">
             <!-- Semi-transparent background overlay -->
-            <div class="absolute inset-0 bg-gray-500 bg-opacity-30 transition-opacity" onclick={closeDrawer}></div>
+            <div class="absolute inset-0 " onclick={closeDrawer}></div>
             
             <section class="absolute inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
                 <div class={`transform transition ease-in-out duration-300 ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
