@@ -1,37 +1,10 @@
-import { init, i } from 'svelte-instantdb';
+import { init } from 'svelte-instantdb';
 import { id } from '@instantdb/core';
 import { PUBLIC_INSTANT_APP_ID } from '$env/static/public';
+import schema from '../instant.schema';
 
 // App ID for the InstantDB application
 export const APP_ID = PUBLIC_INSTANT_APP_ID;
-
-// Define schema - just basic functionality
-export const schema = i.schema({
-    entities: {
-        $users: i.entity({
-            email: i.string().unique().indexed()
-        }),
-        companyProfiles: i.entity({
-            companyName: i.string(),
-            isCompanyAdmin: i.boolean(),
-            userId: i.string().unique()
-        }),
-        technicians: i.entity({
-            firstName: i.string(),
-            lastName: i.string(),
-            phone: i.string(),
-            email: i.string(),
-            verified: i.boolean(),
-            createdAt: i.any()
-        })
-    },
-    links: {
-        userProfile: {
-            forward: { on: 'companyProfiles', has: 'one', label: '$user' },
-            reverse: { on: '$users', has: 'one', label: 'profile' }
-        }
-    }
-});
 
 console.log("Initializing InstantDB with APP_ID:", APP_ID);
 // console.log("Schema structure:", JSON.stringify(schema, null, 2));

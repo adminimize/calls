@@ -3,11 +3,53 @@
     import { db } from '$lib/db';
     import { id } from '@instantdb/core';
     import { tx } from 'svelte-instantdb';
+    import { onMount } from 'svelte';
+    import type { AppSchema } from '../../instant.schema';
+
+    // Type for globalRole
+    interface GlobalRole {
+        id: string;
+        name: string;
+        type: string;
+    }
 
     // Get auth and data
     const auth = companyAuth.useAuth();
-    // Define the query with a proper type
-    const query = db.useQuery({});
+    
+    // Query for globalRoles from the database
+    const query = db.useQuery({
+        globalRoles: {}
+    });
+
+    // Check if we need to initialize default global roles
+    $effect(() => {
+        if (query.current.data?.globalRoles && query.current.data.globalRoles.length === 0) {
+            initializeDefaultRoles();
+        }
+    });
+
+    // Function to initialize default global roles if none exist
+    async function initializeDefaultRoles() {
+        const defaultRoles = [
+            { name: "Camera Operator", type: "Technical" },
+            { name: "Director", type: "Creative" },
+            { name: "Audio Engineer", type: "Technical" },
+            { name: "Production Assistant", type: "Support" },
+            { name: "Lighting Technician", type: "Technical" }
+        ];
+        
+        try {
+            const transactions = defaultRoles.map(role => {
+                const roleId = id();
+                return tx.globalRoles[roleId].update(role);
+            });
+            
+            await db.transact(transactions);
+            console.log("Default global roles initialized successfully");
+        } catch (err) {
+            console.error("Error initializing default global roles:", err);
+        }
+    }
 
     // Call creation modal state
     let isModalOpen = $state(false);
@@ -29,11 +71,9 @@
     const companies = $state([
         { id: "company-1", companyName: "Company Name" }
     ]);
-    const roles = $state([
-        { id: "role-1", name: "Camera Operator", type: "Technical" },
-        { id: "role-2", name: "Director", type: "Creative" },
-        { id: "role-3", name: "Audio Engineer", type: "Technical" }
-    ]);
+    
+    // Get roles from database query
+    const globalRoles = $derived(query.current.data?.globalRoles || []);
     
     // Get company ID (assuming single company for now)
     let companyId = companies[0]?.id;
@@ -299,6 +339,11 @@
                 <div class="bg-white shadow rounded-lg divide-y divide-gray-200">
                     <div class="p-6">
                         <p class="text-gray-500">No calls scheduled yet</p>
+                        <div class="mt-4">
+                            <a href="/dashboard/debug" class="text-xs text-indigo-600 hover:text-indigo-800">
+                                Debug Schema
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -309,8 +354,8 @@
     {#if isModalOpen}
         <div class="fixed z-10 inset-0 overflow-y-auto">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <!-- Background overlay -->
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick={closeModal}></div>
+                <!-- Background overlay - removed bg-opacity-75 -->
+                <div class="fixed inset-0 bg-gray-500 transition-opacity" onclick={closeModal}></div>
                 
                 <!-- Modal panel -->
                 <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
@@ -395,7 +440,7 @@
                                                                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                                                 >
                                                                     <option value="">Select a role</option>
-                                                                    {#each roles as availableRole}
+                                                                    {#each globalRoles as availableRole}
                                                                         <option value={availableRole.id}>{availableRole.name} ({availableRole.type})</option>
                                                                     {/each}
                                                                 </select>
@@ -463,8 +508,8 @@
     {#if isSmsModalOpen}
         <div class="fixed z-10 inset-0 overflow-y-auto">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <!-- Background overlay -->
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick={closeSmsModal}></div>
+                <!-- Background overlay - removed bg-opacity-75 -->
+                <div class="fixed inset-0 bg-gray-500 transition-opacity" onclick={closeSmsModal}></div>
                 
                 <!-- Modal panel -->
                 <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
