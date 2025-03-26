@@ -6,14 +6,18 @@
 
     // Get auth and data
     const auth = companyAuth.useAuth();
-    // Use separate queries to avoid type issues
-    const query = db.useQuery({
-        calls: {}
-    });
+    // Define the query with a proper type
+    const query = db.useQuery({});
 
     // Call creation modal state
     let isModalOpen = $state(false);
     let formStatus = $state({ submitting: false, message: '', type: '' });
+
+    // SMS widget state
+    let isSmsModalOpen = $state(false);
+    let phoneNumber = $state('');
+    let smsMessage = $state('');
+    let smsStatus = $state({ submitting: false, message: '', type: '' });
 
     // Form state
     let title = $state('');
@@ -34,8 +38,8 @@
     // Get company ID (assuming single company for now)
     let companyId = companies[0]?.id;
     
-    // Derived state
-    const calls = $derived(query.current.data?.calls || []);
+    // Derived state - using an empty array since calls aren't properly defined in the schema yet
+    const calls = $derived([]);
     
     // Set default times for tomorrow 9am - 10pm
     function setDefaultTimes() {
@@ -136,6 +140,69 @@
             formStatus.submitting = false;
         }
     }
+
+    function handleSignOut() {
+        companyAuth.signOut();
+    }
+    
+    function openSmsModal() {
+        // Reset form
+        phoneNumber = '';
+        smsMessage = '';
+        smsStatus.message = '';
+        smsStatus.type = '';
+        
+        // Open modal
+        isSmsModalOpen = true;
+    }
+    
+    function closeSmsModal() {
+        isSmsModalOpen = false;
+    }
+    
+    async function handleSendSms(e: Event) {
+        e.preventDefault();
+        
+        // Set submitting state
+        smsStatus.submitting = true;
+        smsStatus.message = '';
+        smsStatus.type = '';
+        
+        try {
+            const response = await fetch('/api/sms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    recipient: phoneNumber,
+                    message: smsMessage
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                smsStatus.message = 'SMS sent successfully!';
+                smsStatus.type = 'success';
+                
+                // Close modal after a delay
+                setTimeout(() => {
+                    closeSmsModal();
+                }, 1500);
+            } else {
+                smsStatus.message = result.error || 'Failed to send SMS';
+                smsStatus.type = 'error';
+            }
+        } catch (err: any) {
+            // Error handling
+            console.error('Error sending SMS:', err);
+            smsStatus.message = err.message || 'Failed to send SMS';
+            smsStatus.type = 'error';
+        } finally {
+            smsStatus.submitting = false;
+        }
+    }
 </script>
 
 {#if auth.current.isLoading}
@@ -156,29 +223,6 @@
 
 {#snippet dashboard()}
     <div class="min-h-screen bg-gray-50">
-        <nav class="bg-white shadow">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex h-16 justify-between">
-                    <div class="flex">
-                        <div class="flex flex-shrink-0 items-center">
-                            <h1 class="text-xl font-bold text-gray-900">Callboard</h1>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <div class="flex items-center gap-4">
-                            <span class="text-sm text-gray-700">{auth.current.user?.email}</span>
-                            <button
-                                onclick={handleSignOut}
-                                class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                Sign out
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
         <main class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
             <div class="px-4 sm:px-0">
                 <div class="flex justify-between items-center mb-6">
@@ -235,6 +279,21 @@
                             <p class="text-sm text-gray-500 truncate">Manage your company profile</p>
                         </div>
                     </a>
+                    
+                    <button
+                        onclick={openSmsModal}
+                        class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                    >
+                        <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-md bg-indigo-600 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900">Send SMS</p>
+                            <p class="text-sm text-gray-500 truncate">Notify crew via text message</p>
+                        </div>
+                    </button>
                 </div>
 
                 <div class="bg-white shadow rounded-lg divide-y divide-gray-200">
@@ -388,6 +447,86 @@
                                                 class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm disabled:opacity-50"
                                             >
                                                 {formStatus.submitting ? 'Creating...' : 'Create Call'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {/if}
+    
+    <!-- SMS Modal -->
+    {#if isSmsModalOpen}
+        <div class="fixed z-10 inset-0 overflow-y-auto">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <!-- Background overlay -->
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick={closeSmsModal}></div>
+                
+                <!-- Modal panel -->
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Send SMS Notification</h3>
+                                
+                                {#if smsStatus.message}
+                                    <div class={`mt-4 p-4 rounded-md ${smsStatus.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+                                        {smsStatus.message}
+                                    </div>
+                                {/if}
+                                
+                                <div class="mt-4">
+                                    <form onsubmit={handleSendSms} class="space-y-6">
+                                        <div>
+                                            <label for="phoneNumber" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                                            <div class="mt-1">
+                                                <input 
+                                                    type="tel" 
+                                                    id="phoneNumber" 
+                                                    name="phoneNumber" 
+                                                    required 
+                                                    bind:value={phoneNumber}
+                                                    placeholder="+1XXXXXXXXXX"
+                                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                                />
+                                                <p class="mt-1 text-xs text-gray-500">Include country code (e.g. +1 for US)</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="smsMessage" class="block text-sm font-medium text-gray-700">Message</label>
+                                            <div class="mt-1">
+                                                <textarea 
+                                                    id="smsMessage" 
+                                                    name="smsMessage" 
+                                                    required 
+                                                    bind:value={smsMessage}
+                                                    rows="4"
+                                                    maxlength="160"
+                                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                                ></textarea>
+                                                <p class="mt-1 text-xs text-gray-500">{smsMessage.length}/160 characters</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                                            <button
+                                                type="button"
+                                                onclick={closeSmsModal}
+                                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                disabled={smsStatus.submitting}
+                                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm disabled:opacity-50"
+                                            >
+                                                {smsStatus.submitting ? 'Sending...' : 'Send SMS'}
                                             </button>
                                         </div>
                                     </form>

@@ -188,27 +188,6 @@
 </script>
 
 <div class="min-h-screen bg-gray-50">
-    <nav class="bg-white shadow">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="flex h-16 justify-between">
-                <div class="flex">
-                    <div class="flex flex-shrink-0 items-center">
-                        <h1 class="text-xl font-bold text-gray-900">Callboard</h1>
-                    </div>
-                    <div class="ml-6 flex items-center space-x-4">
-                        <a href="/dashboard" class="text-gray-500 hover:text-gray-700">Dashboard</a>
-                        <a href="/dashboard/technicians" class="text-indigo-600 font-medium">Technicians</a>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <div class="flex items-center gap-4">
-                        <span class="text-sm text-gray-700">{auth.current.user?.email}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
     <main class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8 relative">
         <div class="px-4 sm:px-0">
             <div class="flex justify-between items-center mb-6">

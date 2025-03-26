@@ -1,8 +1,9 @@
 import { init, i } from 'svelte-instantdb';
 import { id } from '@instantdb/core';
+import { PUBLIC_INSTANT_APP_ID } from '$env/static/public';
 
 // App ID for the InstantDB application
-export const APP_ID = "e3396391-6dad-4872-aa77-f74ff792dd7f";
+export const APP_ID = PUBLIC_INSTANT_APP_ID;
 
 // Define schema - just basic functionality
 export const schema = i.schema({
