@@ -6,6 +6,7 @@
     import { CalendarDate, today, getLocalTimeZone, parseDate } from "@internationalized/date";
     import type { DateValue } from "@internationalized/date";
     import DatePicker from "$lib/components/DatePicker.svelte";
+    import DateChip from "$lib/components/DateChip.svelte";
 
     // Define the schema for our simple call
     const schema = z.object({
@@ -118,6 +119,7 @@
                         id="name"
                         bind:value={form.name}
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="Enter call name"
                     />
                     {#if errors.name}
                         <p class="mt-1 text-sm text-red-600">{errors.name[0]}</p>
@@ -125,7 +127,8 @@
                 </div>
                 
                 <div>
-                    <DatePicker 
+                    <DatePicker
+                        label="Call Date"
                         value={selectedDate}
                         onValueChange={handleDateSelect}
                         open={isOpen}
@@ -135,12 +138,14 @@
                     {/if}
                 </div>
                 
-                <button
-                    type="submit"
-                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                    Create Call
-                </button>
+                <div>
+                    <button
+                        type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        Create Call
+                    </button>
+                </div>
             </form>
         </div>
         
@@ -151,23 +156,16 @@
             {#if calls.length === 0}
                 <p class="text-gray-500">No calls created yet</p>
             {:else}
-                <ul class="divide-y divide-gray-200">
+                <div class="space-y-4">
                     {#each calls as call}
-                        <li class="py-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">{call.name}</p>
-                                    <p class="text-sm text-gray-500">
-                                        {new Date(call.date).toLocaleDateString()}
-                                    </p>
-                                </div>
-                                <p class="text-xs text-gray-500">
-                                    Created: {new Date(call.createdAt).toLocaleString()}
-                                </p>
+                        <div class="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:border-gray-200">
+                            <div class="flex items-center gap-4">
+                                <DateChip date={parseDate(call.date)} />
+                                <span class="text-gray-900">{call.name}</span>
                             </div>
-                        </li>
+                        </div>
                     {/each}
-                </ul>
+                </div>
             {/if}
         </div>
     </div>
