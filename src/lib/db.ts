@@ -63,4 +63,30 @@ export async function addTechnician(data: any) {
 }
 
 // Export commonly used utilities
-export { tx, id } from 'svelte-instantdb'; 
+export { tx, id } from 'svelte-instantdb';
+
+export type Schema = {
+    companies: {
+        id: string;
+        name: string;
+        description: string;
+        website: string;
+        icon: string;
+        logo: string;
+    };
+    calls: {
+        id: string;
+        startDate: string;
+        endDate: string;
+        startTime: string;
+        endTime: string;
+        notes: string;
+    };
+    venues: {
+        id: string;
+        name: string;
+        capacity: number;
+        accessible: boolean;
+        notes: string;
+    };
+} 
