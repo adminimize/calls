@@ -42,6 +42,22 @@ const _schema = i.schema({
 		globalRoles: i.entity({
 			name: i.string(),
 			type: i.string()
+		}),
+		// Venue entity
+		venues: i.entity({
+			name: i.string(),
+			createdAt: i.string()
+		}),
+		// Simple company entity
+		simpleCompanies: i.entity({
+			name: i.string(),
+			description: i.string(),
+			website: i.string(),
+			createdAt: i.string()
+		}),
+		$files: i.entity({
+			path: i.string().unique().indexed(),
+			url: i.string()
 		})
 	},
 	links: {
@@ -65,6 +81,10 @@ const _schema = i.schema({
 		callRoleGlobalRole: {
 			forward: { on: 'callRoles', has: 'one', label: 'globalRole' },
 			reverse: { on: 'globalRoles', has: 'many', label: 'callRoles' }
+		},
+		companyIcon: {
+			forward: { on: 'simpleCompanies', has: 'one', label: 'icon' },
+			reverse: { on: '$files', has: 'one', label: 'company' }
 		}
 	},
 	rooms: {}
