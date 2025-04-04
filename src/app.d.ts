@@ -16,6 +16,12 @@ declare global {
 		}
 		// interface Platform {}
 	}
+
+	// Add type declarations for trix custom elements
+	interface HTMLElementTagNameMap {
+		'trix-editor': any;
+		'trix-toolbar': any;
+	}
 }
 
 export {};

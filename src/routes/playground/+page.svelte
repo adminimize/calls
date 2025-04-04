@@ -29,7 +29,8 @@
     // Form states
     let callForm = $state({
         name: '',
-        date: ''
+        date: '',
+        notes: ''
     });
 
     let companyForm = $state({
@@ -171,7 +172,8 @@
 
             callForm = {
                 name: '',
-                date: ''
+                date: '',
+                notes: ''
             };
             selectedDate = undefined;
         } catch (err) {

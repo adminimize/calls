@@ -10,6 +10,7 @@
             id: string;
             name: string;
             date: string;
+            notes?: string;
         }>;
     }>();
 
@@ -38,7 +39,8 @@
                 selected: {
                     id: call.id,
                     name: call.name,
-                    date: call.date
+                    date: call.date,
+                    notes: call.notes || ''
                 }
             };
             console.log('handleCallClick - Pushing state:', stateData);
