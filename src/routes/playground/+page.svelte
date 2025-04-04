@@ -9,6 +9,7 @@
     import CompanyChip from "$lib/components/chips/CompanyChip.svelte";
     import DetailZone from "$lib/components/DetailZone.svelte";
     import { preloadData, pushState, goto } from '$app/navigation';
+    import { companyAuth } from '$lib/companyAuth';
 
     // Define schemas for validation
     const callSchema = z.object({
@@ -69,8 +70,12 @@
         simpleCompanies: {
             icon: {}
         },
+        companyProfiles: {},
         venues: {}
     });
+
+    // Get auth state
+    const auth = companyAuth.useAuth();
 
     // Helper function to sort calls by date
     function sortCallsByDate(calls: any[]) {
@@ -83,6 +88,7 @@
     );
 
     const companies = $derived(query.current.data?.simpleCompanies || []);
+    const companyProfiles = $derived(query.current.data?.companyProfiles || []);
     const venues = $derived(query.current.data?.venues || []);
 
     // Handle date selection
@@ -199,6 +205,11 @@
             return;
         }
 
+        if (!auth.current.user) {
+            companyErrors.general = ['You must be logged in to create a company'];
+            return;
+        }
+
         try {
             const companyId = id();
             let iconId: string | undefined;
@@ -221,15 +232,13 @@
                 }
             }
 
-            // Create company
+            // Create company profile
             await db.transact([
-                tx.simpleCompanies[companyId].update({
-                    name: companyForm.name,
-                    description: companyForm.description || '',
-                    website: companyForm.website || '',
-                    createdAt: new Date().toISOString()
-                }),
-                ...(iconId ? [tx.simpleCompanies[companyId].link({ icon: iconId })] : [])
+                tx.companyProfiles[companyId].update({
+                    companyName: companyForm.name,
+                    isCompanyAdmin: true,
+                    userId: auth.current.user.id
+                })
             ]);
 
             companyForm = { name: '', description: '', website: '' };
@@ -363,12 +372,14 @@
                         </button>
                     </form>
 
-                    {#if companies.length > 0}
+                    {#if companyProfiles.length > 0}
                         <div class="mt-4">
                             <h3 class="text-sm font-medium text-gray-700 mb-2">Existing Companies</h3>
                             <div class="flex flex-wrap gap-2">
-                                {#each companies as company}
-                                    <CompanyChip {company} onClick={(e) => handleCompanyClick(e, company)} />
+                                {#each companyProfiles as company}
+                                    <div class="inline-flex items-center gap-2 px-3 py-2 bg-white border rounded-full">
+                                        <span class="text-sm font-medium text-gray-900">{company.companyName}</span>
+                                    </div>
                                 {/each}
                             </div>
                         </div>
