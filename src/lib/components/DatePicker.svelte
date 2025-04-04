@@ -7,7 +7,7 @@
     import type { DateValue } from "@internationalized/date";
     import { getRelativeTimeMessage } from "$lib/utils/dateUtils";
 
-    let { value, onValueChange, open = false, label = "Date" } = $props<{
+    const { value, onValueChange, open = false, label = "Date" } = $props<{
         value: DateValue | undefined;
         onValueChange: (value: DateValue | undefined) => void;
         open?: boolean;
@@ -24,6 +24,11 @@
 
     // Reactive relative message
     const relativeMessage = $derived.by(() => getRelativeTimeMessage(value));
+
+    // Function to handle date selection, including Today button
+    function handleDateSelect(date: DateValue | undefined) {
+        onValueChange(date);
+    }
 
     // Format date as YYYY/MM/DD
     function formatDateSegment(part: string, value: string): string {
@@ -42,7 +47,7 @@
         >
             <div class="flex w-full flex-col">
                 <div class="relative">
-                    <div class="group relative rounded-lg border border-gray-200 bg-gradient-to-r from-white to-gray-50 shadow-sm transition-all hover:border-indigo-200 hover:shadow-md">
+                    <div class="group relative rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:border-indigo-200 hover:shadow-md">
                         <div class="flex items-center">
                             <DatePicker.Input
                                 class="flex-1 rounded-lg bg-transparent pl-3 pr-12 py-2 text-sm text-gray-900 focus:outline-none"
@@ -67,15 +72,19 @@
                                 {/snippet}
                             </DatePicker.Input>
                             {#if value}
-                                <div class="flex items-center pr-12">
-                                    <span class="text-xs italic text-indigo-600 group-hover:text-indigo-700 ml-2">{relativeMessage}</span>
+                                <div class="relative flex items-center h-[34px]">
+                                    <div class="absolute inset-0 bg-indigo-50/80"></div>
+                                    <div class="absolute inset-y-0 left-0 w-px bg-indigo-200"></div>
+                                    <DatePicker.Trigger class="relative px-3 cursor-pointer">
+                                        <span class="text-xs italic text-indigo-600 group-hover:text-indigo-700 whitespace-nowrap">{relativeMessage}</span>
+                                    </DatePicker.Trigger>
+                                    <DatePicker.Trigger
+                                        class="relative text-gray-400 hover:text-indigo-500 inline-flex items-center justify-center px-2 transition-colors group-hover:text-indigo-600"
+                                    >
+                                        <CalendarBlank class="h-5 w-5" />
+                                    </DatePicker.Trigger>
                                 </div>
                             {/if}
-                            <DatePicker.Trigger
-                                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-500 inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors group-hover:text-indigo-600"
-                            >
-                                <CalendarBlank class="h-5 w-5" />
-                            </DatePicker.Trigger>
                         </div>
                     </div>
                 </div>
@@ -85,17 +94,26 @@
                     >
                         {#snippet children({ months, weekdays })}
                             <DatePicker.Header class="flex items-center justify-between mb-2">
-                                <DatePicker.PrevButton
-                                    class="rounded-md bg-white p-2 hover:bg-gray-100 hover:text-indigo-600"
+                                <div class="flex items-center gap-2">
+                                    <DatePicker.PrevButton
+                                        class="rounded-md bg-white p-2 hover:bg-gray-100 hover:text-indigo-600"
+                                    >
+                                        <CaretLeft class="h-5 w-5" />
+                                    </DatePicker.PrevButton>
+                                    <DatePicker.Heading class="text-sm font-medium" />
+                                    <DatePicker.NextButton
+                                        class="rounded-md bg-white p-2 hover:bg-gray-100 hover:text-indigo-600"
+                                    >
+                                        <CaretRight class="h-5 w-5" />
+                                    </DatePicker.NextButton>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="text-sm text-gray-500 hover:text-indigo-600 font-medium cursor-pointer transition-all hover:scale-105 active:scale-95 hover:underline decoration-2 underline-offset-4 decoration-indigo-200"
+                                    onclick={() => handleDateSelect(today(getLocalTimeZone()))}
                                 >
-                                    <CaretLeft class="h-5 w-5" />
-                                </DatePicker.PrevButton>
-                                <DatePicker.Heading class="text-sm font-medium" />
-                                <DatePicker.NextButton
-                                    class="rounded-md bg-white p-2 hover:bg-gray-100 hover:text-indigo-600"
-                                >
-                                    <CaretRight class="h-5 w-5" />
-                                </DatePicker.NextButton>
+                                    Today
+                                </button>
                             </DatePicker.Header>
                             <div class="flex flex-col space-y-4 pt-2 sm:flex-row sm:space-x-4 sm:space-y-0">
                                 {#each months as month}

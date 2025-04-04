@@ -41,15 +41,19 @@
     });
 </script>
 
-<div class="inline-flex flex-col gap-1 px-3 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg min-w-[140px]">
-    <div class="text-sm font-medium text-indigo-900">
-        {formatDate(date)}
+<div class="inline-flex flex-col overflow-hidden rounded-lg border border-indigo-100">
+    <div class="px-3 py-2 bg-gradient-to-r from-indigo-50 to-purple-50">
+        <div class="text-sm font-medium text-indigo-900">
+            {formatDate(date)}
+        </div>
     </div>
-    <div class="text-xs text-indigo-600">
-        {#if !isCurrentYear}
-            <span class="font-medium">{getDayName(date)}</span>
-            <span class="mx-1">|</span>
-        {/if}
-        <span class="italic">{relativeMessage}</span>
+    <div class="px-3 py-1.5 bg-gray-50/80 backdrop-blur-sm border-t border-gray-100">
+        <div class="text-xs text-indigo-600">
+            {#if !isCurrentYear}
+                <span class="font-medium">{getDayName(date)}</span>
+                <span class="mx-1">|</span>
+            {/if}
+            <span class="italic">{relativeMessage}</span>
+        </div>
     </div>
 </div> 
