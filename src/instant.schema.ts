@@ -29,6 +29,11 @@ const _schema = i.schema({
 			createdAt: i.string(),
 			updatedAt: i.string()
 		}),
+		simpleCalls: i.entity({
+			name: i.string(),
+			date: i.string(),
+			createdAt: i.string()
+		}),
 		callRoles: i.entity({
 			quantity: i.number(),
 			notes: i.string(),
