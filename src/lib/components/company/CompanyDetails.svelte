@@ -3,6 +3,9 @@
     import { page } from '$app/state';
     import ShortTextInput from '../inputs/ShortTextInput.svelte';
     import LongTextInput from '../inputs/LongTextInput.svelte';
+    import SaveStatus from '../SaveStatus.svelte';
+    import { autoSave, type SaveStatus as SaveStatusType } from '$lib/utils/autoSave';
+    import { writable } from 'svelte/store';
 
     const { company } = $props<{
         company: {
@@ -18,7 +21,7 @@
     let name = $state(company.name);
     let description = $state(company.description || '');
     let website = $state(company.website || '');
-    let saveStatus = $state<'saved' | 'saving' | 'error'>('saved');
+    let saveStatus = writable<SaveStatusType>('saved');
 
     // Reset form values when company changes
     $effect(() => {
@@ -29,24 +32,20 @@
 
     // Save when values change
     $effect(() => {
-        if (name === company.name && 
-            description === (company.description || '') && 
-            website === (company.website || '')) {
-            return;
-        }
-
-        saveStatus = 'saving';
-        db.transact(
-            tx.simpleCompanies[company.id].update({
+        autoSave({
+            id: company.id,
+            entity: 'simpleCompanies',
+            fields: {
                 name,
                 description: description || null,
                 website: website || null,
-            })
-        ).then(() => {
-            saveStatus = 'saved';
-        }).catch((err) => {
-            console.error('Error saving company:', err);
-            saveStatus = 'error';
+            },
+            originalValues: {
+                name: company.name,
+                description: company.description || '',
+                website: company.website || ''
+            },
+            saveStatus
         });
     });
 
@@ -56,7 +55,7 @@
         const file = input.files?.[0];
         if (!file) return;
         
-        saveStatus = 'saving';
+        saveStatus.set('saving');
         try {
             const path = `companies/${company.id}/${type}.png`;
             const { data: fileData } = await db.storage.uploadFile(path, file, {
@@ -67,37 +66,16 @@
                 tx.simpleCompanies[company.id].link({ [type]: fileData.id })
             );
             
-            saveStatus = 'saved';
+            saveStatus.set('saved');
         } catch (err) {
             console.error(`Error uploading ${type}:`, err);
-            saveStatus = 'error';
+            saveStatus.set('error');
         }
     }
 </script>
 
 <div class="space-y-8 p-8">
-    <!-- Save status indicator -->
-    <div class="absolute top-4 right-4 flex items-center gap-2 text-sm">
-        {#if saveStatus === 'saving'}
-            <div class="animate-pulse text-amber-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 3a7 7 0 00-7 7 1 1 0 11-2 0 9 9 0 1118 0 1 1 0 11-2 0 7 7 0 00-7-7z" clip-rule="evenodd" />
-                </svg>
-            </div>
-        {:else if saveStatus === 'saved'}
-            <div class="text-emerald-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-            </div>
-        {:else if saveStatus === 'error'}
-            <div class="text-red-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-            </div>
-        {/if}
-    </div>
+    <SaveStatus status={$saveStatus} />
 
     <!-- Visual assets section -->
     <div class="grid grid-cols-2 gap-8">

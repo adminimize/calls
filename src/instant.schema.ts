@@ -23,8 +23,11 @@ const _schema = i.schema({
 		// Call entities
 		calls: i.entity({
 			title: i.string(),
+			startDate: i.string(),
+			endDate: i.string(),
 			startTime: i.string(),
 			endTime: i.string(),
+			notes: i.string(),
 			status: i.string(),
 			createdAt: i.string(),
 			updatedAt: i.string()
@@ -32,6 +35,7 @@ const _schema = i.schema({
 		simpleCalls: i.entity({
 			name: i.string(),
 			date: i.string(),
+			notes: i.string(),
 			createdAt: i.string()
 		}),
 		callRoles: i.entity({

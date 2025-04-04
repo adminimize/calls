@@ -76,11 +76,15 @@ export type Schema = {
     };
     calls: {
         id: string;
+        title: string;
         startDate: string;
         endDate: string;
         startTime: string;
         endTime: string;
         notes: string;
+        status: string;
+        createdAt: string;
+        updatedAt: string;
     };
     venues: {
         id: string;

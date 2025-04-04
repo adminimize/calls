@@ -1,87 +1,86 @@
 <script lang="ts">
     import type { Schema } from '$lib/db';
-    import DateInput from '../inputs/DateInput.svelte';
-    import TimeInput from '../inputs/TimeInput.svelte';
+    import { db, tx } from '$lib/db';
+    import DatePicker from '../DatePicker.svelte';
     import LongTextInput from '../inputs/LongTextInput.svelte';
-    import { tx } from '$lib/db';
+    import SaveStatus from '../SaveStatus.svelte';
+    import { CalendarDate } from "@internationalized/date";
+    import type { DateValue } from "@internationalized/date";
+    import { autoSave, type SaveStatus as SaveStatusType } from '$lib/utils/autoSave';
+    import { writable } from 'svelte/store';
 
     let { call } = $props<{
         call: Schema['calls'];
     }>();
 
-    let startDate = $state(call?.startDate ?? '');
-    let endDate = $state(call?.endDate ?? '');
-    let startTime = $state(call?.startTime ?? '');
-    let endTime = $state(call?.endTime ?? '');
+    let name = $state(call?.name ?? '');
+    let date = $state<DateValue | undefined>(undefined);
     let notes = $state(call?.notes ?? '');
-    let saving = $state(false);
+    let saveStatus = writable<SaveStatusType>('saved');
 
+    // Reset form values when call changes
     $effect(() => {
         if (call) {
-            startDate = call.startDate;
-            endDate = call.endDate;
-            startTime = call.startTime;
-            endTime = call.endTime;
-            notes = call.notes;
+            name = call.name ?? '';
+            if (call.date) {
+                date = new CalendarDate(
+                    parseInt(call.date.split('-')[0]),
+                    parseInt(call.date.split('-')[1]),
+                    parseInt(call.date.split('-')[2])
+                );
+            }
+            notes = call.notes ?? '';
         }
     });
 
+    // Save when values change
     $effect(() => {
         if (!call) return;
         
-        const hasChanges = 
-            startDate !== call.startDate ||
-            endDate !== call.endDate ||
-            startTime !== call.startTime ||
-            endTime !== call.endTime ||
-            notes !== call.notes;
-
-        if (hasChanges) {
-            saving = true;
-            tx.calls[call.id].update({
-                startDate,
-                endDate,
-                startTime,
-                endTime,
-                notes
-            }).then(() => {
-                saving = false;
-            });
-        }
+        autoSave({
+            id: call.id,
+            entity: 'simpleCalls',
+            fields: {
+                name,
+                date: date?.toString() ?? '',
+                notes: notes || null
+            },
+            originalValues: {
+                name: call.name ?? '',
+                date: call.date ?? '',
+                notes: call.notes ?? ''
+            },
+            saveStatus
+        });
     });
 </script>
 
-<div class="space-y-6">
-    <div class="grid grid-cols-2 gap-4">
-        <DateInput
-            bind:value={startDate}
-            label="Start Date"
-            id="start-date"
-        />
-        <DateInput
-            bind:value={endDate}
-            label="End Date"
-            id="end-date"
-        />
+<div class="space-y-6 p-8">
+    <SaveStatus status={$saveStatus} />
+
+    <div class="space-y-6 bg-gray-50 rounded-2xl p-8 shadow-inner">
+        <div class="space-y-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                    type="text"
+                    id="name"
+                    bind:value={name}
+                    class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors duration-200"
+                />
+            </div>
+
+            <DatePicker
+                value={date}
+                onValueChange={(newDate) => date = newDate}
+                label="Date"
+            />
+
+            <LongTextInput
+                bind:value={notes}
+                label="Notes"
+                id="notes"
+            />
+        </div>
     </div>
-    <div class="grid grid-cols-2 gap-4">
-        <TimeInput
-            bind:value={startTime}
-            label="Start Time"
-            id="start-time"
-        />
-        <TimeInput
-            bind:value={endTime}
-            label="End Time"
-            id="end-time"
-        />
-    </div>
-    <LongTextInput
-        bind:value={notes}
-        label="Notes"
-        id="notes"
-    />
-    {#if saving}
-        <p class="text-sm text-gray-500">Saving changes...</p>
-    {/if}
 </div> 
