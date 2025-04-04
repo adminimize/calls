@@ -11,7 +11,9 @@ declare global {
 			// Auth is handled by InstantDB client-side
 		}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			selected?: any;
+		}
 		// interface Platform {}
 	}
 }
