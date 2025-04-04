@@ -6,7 +6,7 @@
     import { CalendarDate, today, getLocalTimeZone, parseDate } from "@internationalized/date";
     import type { DateValue } from "@internationalized/date";
     import DatePicker from "$lib/components/DatePicker.svelte";
-    import DateChip from "$lib/components/DateChip.svelte";
+    import EventList from "$lib/components/EventList.svelte";
 
     // Define the schema for our simple call
     const schema = z.object({
@@ -152,21 +152,7 @@
         <!-- List of Calls -->
         <div class="bg-white shadow rounded-lg p-6">
             <h2 class="text-lg font-semibold mb-4">Existing Calls</h2>
-            
-            {#if calls.length === 0}
-                <p class="text-gray-500">No calls created yet</p>
-            {:else}
-                <div class="space-y-4">
-                    {#each calls as call}
-                        <div class="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:border-gray-200">
-                            <div class="flex items-center gap-4">
-                                <DateChip date={parseDate(call.date)} />
-                                <span class="text-gray-900">{call.name}</span>
-                            </div>
-                        </div>
-                    {/each}
-                </div>
-            {/if}
+            <EventList events={calls} />
         </div>
     </div>
 </div> 

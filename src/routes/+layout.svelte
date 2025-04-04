@@ -3,9 +3,9 @@
 	import { companyAuth } from '$lib/companyAuth';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-
-	const auth = companyAuth.useAuth();
+	import { Toaster } from 'svelte-5-french-toast';
 	
+	const auth = companyAuth.useAuth();
 	// Get the current route path to highlight active nav items
 	const currentPath = $derived(page.url.pathname);
 
@@ -14,6 +14,8 @@
 		goto('/');
 	}
 </script>
+
+<Toaster />
 
 {#if auth.current.isLoading}
 	<div class="flex min-h-screen items-center justify-center">
